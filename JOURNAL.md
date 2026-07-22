@@ -1,19 +1,19 @@
-# Setup Journal
+# Journal
 
-## 2026-07-22 — Environment setup
+## Week 7 — Issue selection
 
-Confirmed local toolchain meets the prerequisites in [docs/SETUP.md](docs/SETUP.md):
+**Issue link:** https://github.com/ascherj/pathreview/issues/153
 
-| Requirement | Installed |
-|---|---|
-| Git | 2.54.0 |
-| Python | 3.12.13 |
-| Node.js | 26.0.0 |
-| npm | 11.12.1 |
-| Docker | 29.4.3 |
-| Docker Compose | v5.1.3 |
-| Platform | macOS (Darwin arm64) |
+**Issue title:** Faithfulness checker crashes when a context chunk has text: None
 
-Followed the setup steps in docs/SETUP.md: cloned the repo, copied `.env.example` to `.env`, and reviewed `docker-compose.yml` and the Makefile targets (`make setup`, `make run`) ahead of running the full stack.
+**Tier:** [x] Tier 1
 
-This branch (`chore/153-environment-setup`) exists to confirm the dev environment is ready per issue #153, following the branch naming convention in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+**Problem summary:**
+
+`FaithfulnessChecker.check()` in [rag/evaluator/faithfulness_checker.py](rag/evaluator/faithfulness_checker.py) builds the combined context string with `chunk.get("text", "")` before joining all chunks together, but `dict.get`'s default only kicks in when the key is *missing* — if a chunk explicitly has `"text": None`, `.get` still returns `None`. That `None` then lands in the list passed to `" ".join(...)`, which raises a `TypeError` because `join` requires every item to be a string. In practice this means any retrieved context chunk with a null `text` field (e.g. a chunk that failed to embed content, or a placeholder record) crashes the whole faithfulness check instead of just being treated as empty. A successful fix should coerce a `None` text value to an empty string (or otherwise skip that chunk) so `check()` returns a normal float score instead of throwing, which is exactly what `test_none_context_chunk_text` in [tests/unit/test_faithfulness_checker.py](tests/unit/test_faithfulness_checker.py) asserts.
+
+**Branch name:** fix/153-faithfulness-checker-crashes
+
+**Setup confirmation:** [x] App runs locally at localhost:5173
+
+**Cohort ledger:** [ ] Issue added to cohort ledger
