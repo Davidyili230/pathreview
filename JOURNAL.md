@@ -22,7 +22,7 @@
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** (added in this commit — see `tests/unit/test_faithfulness_checker.py::test_none_context_chunk_text`)
+**Reproduction commit link:** https://github.com/Davidyili230/pathreview/commit/ffed894
 
 **Reproduction summary:**
 Ran `pytest tests/unit/test_faithfulness_checker.py -k test_none_context_chunk_text -v` locally. The existing test constructs `context_chunks = [{"text": None}]` and calls `checker.check(...)`, which raises `TypeError: sequence item 0: expected str instance, NoneType found` at [rag/evaluator/faithfulness_checker.py:34](rag/evaluator/faithfulness_checker.py#L34), confirming the crash happens exactly where the issue describes: `chunk.get("text", "")` returns `None` (not the default) when the key exists but its value is explicitly `None`. The sibling test `test_missing_text_key_in_chunk` (key absent entirely) already passes, isolating the bug to the null-value case specifically.
