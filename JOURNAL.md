@@ -46,3 +46,23 @@ Finalize self-review against `docs/CONTRIBUTING.md` (branch name, commit message
 
 **Blockers:**
 None.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** https://github.com/ascherj/pathreview/pull/747
+
+**Branch:** fix/153-faithfulness-checker-crashes
+
+**What you built:**
+Fixed `FaithfulnessChecker.check()` crashing with a `TypeError` when a context chunk has an explicit `"text": None` value. `dict.get(key, default)`'s default only applies when the key is missing, not when it's present but null, so `chunk.get("text", "")` still returned `None` and broke `" ".join(...)`. Changed it to `chunk.get("text") or ""` in [rag/evaluator/faithfulness_checker.py](rag/evaluator/faithfulness_checker.py) so both missing and null text are treated as empty context.
+
+**Tests added or updated:**
+No new test was added — [tests/unit/test_faithfulness_checker.py](tests/unit/test_faithfulness_checker.py)'s existing `test_none_context_chunk_text` already pinned down the expected behavior (constructs `context_chunks = [{"text": None}]` and asserts `check()` returns a float in `[0.0, 1.0]` instead of raising) and was failing before this fix. Also re-verified the sibling test `test_missing_text_key_in_chunk` (missing `"text"` key entirely) still passes, confirming the fix doesn't regress the already-working case.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+(Both pass in the sense the assignment defines: no new failures introduced. `make check` has 182 pre-existing lint errors unrelated to this file, identical count before and after this change. `make test-unit` went from 53 failed/375 passed to 52 failed/376 passed — exactly the target test (`test_none_context_chunk_text`) flipped from fail to pass; the other 52 failures are pre-existing across unrelated modules like `test_bias_detector.py`, `test_pii_scrubber.py`, `test_resume_parser.py`, and `test_review_service.py`, and 3 pre-existing failures remain in `test_faithfulness_checker.py` itself (`test_partial_support_returns_middle_score`, `test_multiple_context_chunks`, `test_multiple_claims_varying_support`) due to unrelated scoring-threshold behavior in `_is_supported`, as flagged in PLAN.md.)
+
+**Draft PR feedback received from:** none yet — PR was just opened; requesting review in the course Slack channel.
