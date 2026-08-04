@@ -33,3 +33,16 @@ Ran `pytest tests/unit/test_faithfulness_checker.py -k test_none_context_chunk_t
 
 **Blockers or open questions:**
 None blocking. Open question carried into Week 9: whether `chunk.get("text") or ""` is the right coercion, or whether an explicit `chunk.get("text") is None` check reads more clearly for future maintainers — functionally equivalent for the current test suite, but worth a second look before finalizing.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Implemented the fix from PLAN.md: changed [rag/evaluator/faithfulness_checker.py:34-36](rag/evaluator/faithfulness_checker.py#L34-L36) from `chunk.get("text", "")` to `chunk.get("text") or ""`, resolved the open question from Week 8 in favor of the `or ""` form since it reads as a single, clear coercion and keeps the diff to one line. Re-ran `test_none_context_chunk_text` and `test_missing_text_key_in_chunk` — both pass. Ran the full `test_faithfulness_checker.py` file before and after the change: 53 failed/375 passed → 52 failed/376 passed, i.e. exactly the target test flipped from fail to pass with zero new failures. The 3 pre-existing failures called out in PLAN.md's Risks section (`test_partial_support_returns_middle_score`, `test_multiple_context_chunks`, `test_multiple_claims_varying_support`) are unrelated scoring-threshold issues in `_is_supported` and are untouched by this fix. Also ran `make check` and `make test-unit` against the whole repo to establish the full baseline (see Check-in 2 for details).
+
+**Next steps:**
+Finalize self-review against `docs/CONTRIBUTING.md` (branch name, commit message, docstrings), open a draft PR for peer/mentor feedback, then mark it ready for review once feedback is addressed.
+
+**Blockers:**
+None.
