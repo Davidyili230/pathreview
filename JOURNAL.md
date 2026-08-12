@@ -66,3 +66,34 @@ No new test was added — [tests/unit/test_faithfulness_checker.py](tests/unit/t
 (Both pass in the sense the assignment defines: no new failures introduced. `make check` has 182 pre-existing lint errors unrelated to this file, identical count before and after this change. `make test-unit` went from 53 failed/375 passed to 52 failed/376 passed — exactly the target test (`test_none_context_chunk_text`) flipped from fail to pass; the other 52 failures are pre-existing across unrelated modules like `test_bias_detector.py`, `test_pii_scrubber.py`, `test_resume_parser.py`, and `test_review_service.py`, and 3 pre-existing failures remain in `test_faithfulness_checker.py` itself (`test_partial_support_returns_middle_score`, `test_multiple_context_chunks`, `test_multiple_claims_varying_support`) due to unrelated scoring-threshold behavior in `_is_supported`, as flagged in PLAN.md.)
 
 **Draft PR feedback received from:** none yet — PR was just opened; requesting review in the course Slack channel.
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+No comments came in on [PR #747](https://github.com/ascherj/pathreview/pull/747) this week. Per the Su26 course note, reviewer feedback isn't part of this term's workflow, so this was expected rather than a sign the PR was ignored. The PR remains open with the one-line fix, the existing regression test passing, and the `make check`/`make test-unit` baselines documented in the Week 9 check-in.
+
+**How you responded:**
+N/A — nothing to respond to. I re-read my own PR description and the diff one more time as a stand-in for review, mostly to check that the reasoning in the description (why `.get("text", "")` doesn't catch an explicit `None`) would actually make sense to someone who hadn't spent a week living inside this file. It held up, so I made no further changes.
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+The bug fix itself was almost trivial — one line, `chunk.get("text") or ""` instead of `chunk.get("text", "")` — but establishing that I hadn't broken anything else took far more effort than writing the fix did. `make test-unit` came back with 53 pre-existing failures in modules I never touched (bias detector, PII scrubber, resume parser, review service), and I had to run the full suite before *and* after my change and diff the failure counts to prove my one-line edit accounted for exactly one flip (53→52 failed) rather than assume "tests pass" meant "tests all pass." I underestimated how much of the actual work in a real PR is that kind of bookkeeping — proving a negative (I introduced zero regressions) is slower than writing the positive fix.
+
+**What did you learn about working in a large codebase?**
+A codebase with pre-existing, known-broken tests is normal, not a red flag — but it changes what "passing tests" has to mean. I couldn't just run pytest and check the exit code; I had to know which failures were mine to fix, which were out of scope, and be able to name them specifically (`test_partial_support_returns_middle_score`, `test_multiple_context_chunks`, `test_multiple_claims_varying_support`) so a reviewer wouldn't have to re-derive that themselves. In a solo project I'd never had to draw that line between "broken because of me" and "broken already" — everything failing was always mine to fix.
+
+**How did AI tools help — and where did they fall short?**
+AI assistance was most useful for the boring-but-error-prone parts: re-running the same pytest command with different flags and diffing output counts, drafting the PLAN.md and PR description in a structure a reviewer could skim, and catching that `dict.get(key, default)` only applies the default on a missing key, not an explicit `None` value — which is the kind of Python semantics gap that's easy to look right past when you're staring at your own code. It fell short on the judgment calls: deciding whether `chunk.get("text") or ""` was the right coercion versus an explicit `is None` check was a stylistic call about what would read clearly to a future maintainer, and no tool could make that decision for me — I had to sit with both versions and pick.
+
+**What would you do differently if you started over?**
+I'd try to get eyes on the PR earlier rather than treating "self-review against CONTRIBUTING.md" as the last gate before opening it — even without formal reviewer feedback this term, posting in the Slack channel a few days earlier would have given more runway for informal comments to actually land before the deadline. I'd also start the before/after test baselining in Week 8 instead of Week 9, since knowing the 53 pre-existing failures going in would have saved me from momentarily worrying my fix had broken something when I first saw a red suite.
+
+**What are you most proud of from this module?**
+Not the fix itself, but the Week 9 check-in note where I pinned down the exact test delta (52 failed/376 passed, one specific test flipped, zero new failures) instead of writing something vague like "tests still pass." That habit of quantifying "no regressions" rather than asserting it is the piece of this module I expect to carry into every PR after this one.
